@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/os/(.*)", "dest": "/os/$1" },
-    { "src": "/apps/(.*)", "dest": "/apps/$1" },
-    { "src": "/i18n/(.*)", "dest": "/i18n/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
-}
