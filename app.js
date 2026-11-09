@@ -10,7 +10,7 @@ const inputField = document.getElementById('user-input');
 const outputContainer = document.getElementById('terminal-output');
 
 // Diccionario multiidioma interactivo con soporte para cambio en caliente
-function getDictText(key, params = {}) {
+function getDictText(key) {
   const dictionaries = {
     'es-es': {
       welcome: "HTML-DOS (c) 2026 stupid dev Systems. Versión de España.",
@@ -158,7 +158,7 @@ function processCommand(cmd) {
       }, 500);
       break;
 
-    case 'stareggs': // EASTER EGG
+    case 'stareggs':
       printToTerminal(`<span style="color: #ff00ff; font-weight: bold;">[SUS] ඞ ¡Comando secreto activado! Has encontrado el easter egg de los desarrolladores. ඞ</span>`);
       triggerAmogusPopup();
       unlockAchievement('stareggs_found', 'Logro Secreto: Easter Egg Stareggs ඞ');
@@ -191,6 +191,8 @@ function processCommand(cmd) {
 // ==========================================
 // MÓDULO EXPLORADOR DE DISCOS Y ARCHIVOS (explorer.exe)
 // ==========================================
+let currentDirectoryHandle = null;
+
 function openDiskExplorer() {
   const explorerDiv = document.createElement('div');
   explorerDiv.style.cssText = "position:fixed; top:10%; left:10%; width:80vw; height:75vh; background:#ece9d8; border:3px solid #0055ea; z-index:999999; font-family:'Segoe UI', Tahoma, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display:flex; flex-direction:column; color:#000;";
@@ -201,7 +203,6 @@ function openDiskExplorer() {
       <button onclick="this.parentNode.parentNode.remove()" style="background:#f00; color:#fff; border:none; padding:2px 8px; font-weight:bold; cursor:pointer;">X</button>
     </div>
     <div style="display:flex; flex-grow:1; height: calc(100% - 35px);">
-      <!-- Panel Izquierdo: Unidades -->
       <div style="width: 220px; background:#fff; border-right:1px solid #999; padding:10px; overflow-y:auto; font-size:0.9rem;">
         <b>Unidades de Disco:</b>
         <ul style="list-style:none; padding-left:10px; margin-top:5px; line-height: 1.8;">
@@ -211,14 +212,13 @@ function openDiskExplorer() {
           <li style="cursor:pointer; color:#0000ff;" onclick="loadNetworkDrive()">🌐 Disco K: (Red Local / PC Real)</li>
         </ul>
       </div>
-      <!-- Panel Derecho: Contenido -->
       <div id="explorer-content" style="flex-grow:1; background:#fff; padding:15px; overflow-y:auto; font-size:0.9rem;">
         <p>Selecciona una unidad a la izquierda para inspeccionar su contenido en modo <b>Read-Only</b>.</p>
       </div>
     </div>
   `;
   document.body.appendChild(explorerDiv);
-  loadDrive('C'); // Cargar C por defecto
+  loadDrive('C');
 }
 
 window.loadDrive = function(driveLetter) {
@@ -227,65 +227,140 @@ window.loadDrive = function(driveLetter) {
 
   if(driveLetter === 'C') {
     content.innerHTML = `
-      <h3>Disco C: \ [Sistema Minwindes Activo]</h3>
-      <p style="color:666; font-size:0.8rem;">Estado: Instalado (${installedOS || 'Ninguno'}) - Solo Lectura</p>
-      <ul style="margin-top:10px; line-height:1.6;">
-        <li>📁 \Minwindes\System32\</li>
-        <li>📁 \Minwindes\Config\</li>
-        <li>📄 user_config.json (Configuración de usuario)</li>
-        <li>📄 active_os.lock (${installedOS ? installedOS : 'none'})</li>
+      <h3>Disco C: \\ [Sistema Minwindes Activo]</h3>
+      <p style="color:#666; font-size:0.8rem;">Estado: Instalado (${installedOS || 'Ninguno'}) - Solo Lectura</p>
+      <ul style="margin-top:10px; line-height:1.8; list-style:none; padding:0;">
+        <li style="cursor:pointer;" ondblclick="alert('Carpeta System32 protegida.')">📁 \\Minwindes\\System32\\</li>
+        <li style="cursor:pointer;" ondblclick="alert('Carpeta Config.')">📁 \\Minwindes\\Config\\</li>
+        <li style="cursor:pointer;" ondblclick="alert('user_config.json')">📄 user_config.json</li>
+        <li style="cursor:pointer;" ondblclick="alert('active_os.lock')">📄 active_os.lock (${installedOS ? installedOS : 'none'})</li>
       </ul>
     `;
   } else if(driveLetter === 'D') {
     content.innerHTML = `
-      <h3>Disco D: \ [Juegos y Proyectos]</h3>
-      <p style="color:666; font-size:0.8rem;">Ecosistema stupid dev</p>
-      <ul style="margin-top:10px; line-height:1.6;">
-        <li>📁 \roms\psx_classics\</li>
-        <li>📁 \projects\nexus-browser\</li>
-        <li>📄 readme_stupid_dev.txt</li>
+      <h3>Disco D: \\ [Juegos y Proyectos]</h3>
+      <p style="color:#666; font-size:0.8rem;">Ecosistema stupid dev</p>
+      <ul style="margin-top:10px; line-height:1.8; list-style:none; padding:0;">
+        <li style="cursor:pointer;" ondblclick="alert('Carpeta ROMs')">📁 \\roms\\psx_classics\\</li>
+        <li style="cursor:pointer;" ondblclick="alert('Proyecto Nexus')">📁 \\projects\\nexus-browser\\</li>
+        <li style="cursor:pointer;" ondblclick="handleFileOpen('stupid_dev_drift_phonk.mp3')">🎵 stupid_dev_drift_phonk.mp3 (Doble clic para oír)</li>
       </ul>
     `;
   } else if(driveLetter === 'Q') {
     content.innerHTML = `
-      <h3>Disco Q: \ [Store Cache & APKs]</h3>
-      <p style="color:666; font-size:0.8rem;">Almacenamiento temporal de la tienda</p>
-      <ul style="margin-top:10px; line-height:1.6;">
-        <li>📁 \store\apks_cache\</li>
-        <li>📄 auth_token_discord.dat</li>
+      <h3>Disco Q: \\ [Store Cache & APKs]</h3>
+      <p style="color:#666; font-size:0.8rem;">Almacenamiento temporal de la tienda</p>
+      <ul style="margin-top:10px; line-height:1.8; list-style:none; padding:0;">
+        <li style="cursor:pointer;">📁 \\store\\apks_cache\\</li>
+        <li style="cursor:pointer;">📄 auth_token_discord.dat</li>
       </ul>
     `;
   }
 }
 
-// Conexión a Disco Real Local (Unidad K: de Red en modo Read-Only)
+// Conexión y Navegación de Carpetas en Disco K: (Red Real)
 window.loadNetworkDrive = async function() {
   const content = document.getElementById('explorer-content');
   if(!content) return;
 
   if (!window.showDirectoryPicker) {
-    content.innerHTML = `<h3>Disco K: [Red Local]</h3><p style="color:red;">Tu navegador no soporta la API File System Access. Usa el navegador en versión de escritorio o app EXE.</p>`;
+    content.innerHTML = `<h3>Disco K: [Red Local]</h3><p style="color:red;">Tu navegador no soporta la API File System Access. Usa Edge/Chrome.</p>`;
     return;
   }
 
   try {
-    content.innerHTML = `<h3>Disco K: [Red Local / PC Real]</h3><p>Solicitando permisos de lectura al usuario (Modo Red Segura)...</p>`;
-    const dirHandle = await window.showDirectoryPicker();
-    let fileListHTML = `<ul style="margin-top:10px; line-height:1.6;">`;
-    
-    for await (const entry of dirHandle.values()) {
-      fileListHTML += `<li>📁 ${entry.name} (${entry.kind})</li>`;
-    }
-    fileListHTML += `</ul>`;
-
-    content.innerHTML = `
-      <h3>Disco K: [Red Local conectada con éxito]</h3>
-      <p style="color:green; font-size:0.8rem;">Conectado a tu disco real en modo Read-Only (Seguro).</p>
-      ${fileListHTML}
-    `;
+    content.innerHTML = `<h3>Disco K: [Red Local / PC Real]</h3><p>Solicitando permisos de lectura al usuario...</p>`;
+    currentDirectoryHandle = await window.showDirectoryPicker();
+    await renderDirectory(currentDirectoryHandle);
   } catch (err) {
     content.innerHTML = `<h3>Disco K: [Red Local]</h3><p style="color:#666;">Permiso denegado o cancelado por el usuario.</p>`;
   }
+}
+
+// Renderizador recursivo para navegar subcarpetas
+async function renderDirectory(dirHandle) {
+  const content = document.getElementById('explorer-content');
+  if(!content) return;
+
+  let fileListHTML = `
+    <h3>Disco K: \\ ${dirHandle.name}</h3>
+    <p style="color:green; font-size:0.8rem;">Conectado en modo Read-Only. (Doble clic en archivos para abrir/reproducir)</p>
+    <ul style="margin-top:10px; line-height:1.8; list-style:none; padding:0;">
+  `;
+
+  for await (const entry of dirHandle.values()) {
+    const icon = entry.kind === 'directory' ? '📁' : getFileIcon(entry.name);
+    fileListHTML += `
+      <li style="cursor:pointer; padding:3px 6px; border-bottom:1px solid #eee;" 
+          ondblclick="handleItemDblClick('${entry.name}', '${entry.kind}', this)"
+          data-name="${entry.name}">
+        ${icon} <b>${entry.name}</b> <span style="color:#888; font-size:0.75rem;">(${entry.kind})</span>
+      </li>
+    `;
+  }
+  fileListHTML += `</ul>`;
+  content.innerHTML = fileListHTML;
+}
+
+function getFileIcon(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  if (['mp3', 'wav', 'mp4', 'ogg'].includes(ext)) return '🎵';
+  if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) return '🖼️';
+  return '📄';
+}
+
+// Manejador de doble clic para abrir subcarpetas o archivos
+window.handleItemDblClick = async function(name, kind, element) {
+  if (kind === 'directory') {
+    if (currentDirectoryHandle) {
+      try {
+        const subDirHandle = await currentDirectoryHandle.getDirectoryHandle(name);
+        currentDirectoryHandle = subDirHandle;
+        await renderDirectory(subDirHandle);
+      } catch(e) {
+        alert("No se pudo acceder a la subcarpeta: " + name);
+      }
+    }
+  } else {
+    handleFileOpen(name);
+  }
+}
+
+// Apertura de archivos (Winamp o Visor)
+window.handleFileOpen = function(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  
+  if (['mp3', 'wav', 'ogg', 'mp4'].includes(ext)) {
+    if (typeof openWinamp === 'function') {
+      const container = document.createElement('div');
+      container.innerHTML = openWinamp({ name: filename });
+      document.body.appendChild(container);
+    } else {
+      alert(`Reproduciendo media: ${filename} (Winamp module missing)`);
+    }
+  } else if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) {
+    showImagePreview(filename);
+  } else {
+    alert(`Archivo en modo lectura: ${filename}`);
+  }
+};
+
+function showImagePreview(filename) {
+  const imgDiv = document.createElement('div');
+  imgDiv.style.cssText = "position:fixed; top:20%; left:30%; background:#fff; border:3px solid #0055ea; padding:10px; z-index:9999999; box-shadow:0 10px 25px rgba(0,0,0,0.5);";
+  imgDiv.innerHTML = `
+    <div style="background:#0055ea; color:#fff; padding:4px 8px; display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+      <span>Visor de Imágenes - ${filename}</span>
+      <span style="cursor:pointer;" onclick="this.parentNode.parentNode.remove()">[X]</span>
+    </div>
+    <div style="padding:10px; text-align:center;">
+      <p style="color:#333; font-size:0.9rem;">🖼️ Vista previa del archivo de imagen local</p>
+      <div style="background:#eee; width:200px; height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed #aaa; margin:10px auto;">
+        <b>${filename}</b>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(imgDiv);
 }
 
 // Lanzador de OS
