@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML-DOS [Versión 4.20.0]</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="crt-screen">
+    <div class="scanline"></div>
+    <div id="terminal-output">
+      <p>HTML-DOS (c) 2026 stupid dev Systems. Todos los derechos reservados.</p>
+      <p>Escribe <span class="cmd-highlight">help</span> para ver los comandos disponibles o <span class="cmd-highlight">install</span> para desplegar Minwindes.</p>
+      <br>
+    </div>
+    <div class="command-line">
+      <span id="prompt-dir">C:\></span>
+      <input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false">
+    </div>
+  </div>
+
+  <!-- Scripts modulares -->
+  <script src="i18n/es-es.js"></script>
+  <script src="localstorage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
