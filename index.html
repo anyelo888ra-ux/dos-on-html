@@ -12,8 +12,6 @@
     <div class="scanline"></div>
     <div id="terminal-output">
       <p>HTML-DOS (c) 2026 stupid dev Systems. Todos los derechos reservados.</p>
-      <p>Escribe <span class="cmd-highlight">help</span> para ver los comandos disponibles o <span class="cmd-highlight">install</span> para desplegar Minwindes.</p>
-      <br>
     </div>
     <div class="command-line">
       <span id="prompt-dir">C:\></span>
@@ -21,9 +19,21 @@
     </div>
   </div>
 
-  <!-- Scripts modulares -->
+  <!-- 1. CARGAR PRIMERO LOS IDIOMAS (/i18n/) -->
   <script src="i18n/es-es.js"></script>
-  <script src="localstorage.js"></script>
+  <script src="i18n/es-mx.js"></script>
+  <script src="i18n/en.js"></script>
+
+  <!-- 2. CARGAR LOS SISTEMAS OPERATIVOS (/os/) -->
+  <script src="os/minwindes1.js"></script>
+  <script src="os/minwindes98.js"></script>
+  <script src="os/minwindes-me.js"></script>
+
+  <!-- 3. CARGAR LAS APLICACIONES EXPANDIBLES (/apps/) -->
+  <script src="apps/winamp-web.js"></script>
+  <script src="apps/blender-web.js"></script>
+
+  <!-- 4. CARGAR EL NÚCLEO DE LA TERMINAL AL FINAL -->
   <script src="app.js"></script>
 </body>
 </html>
