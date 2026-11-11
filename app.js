@@ -1,6 +1,7 @@
 // ==========================================
 // HTML-DOS (c) 2026 stupid dev Systems
 // Intérprete de Comandos Central (CLI Parser)
+// Versión: 4.21.0 (Update del Caos)
 // ==========================================
 
 let currentLang = localStorage.getItem('html_dos_lang') || 'es-es';
@@ -9,16 +10,21 @@ let installedOS = localStorage.getItem('html_dos_os') || null;
 const inputField = document.getElementById('user-input');
 const outputContainer = document.getElementById('terminal-output');
 
-// Diccionario multiidioma interactivo con soporte para cambio en caliente
+// Diccionario multiidioma interactivo
 function getDictText(key) {
   const dictionaries = {
     'es-es': {
       welcome: "HTML-DOS (c) 2026 stupid dev Systems. Versión de España.",
       help: `<b>Comandos Disponibles (HTML-DOS):</b><br>
         - <b>install [version]</b>: Instala Minwindes (minwindes1, minwindes98, me).<br>
-        - <b>os [nombre]</b>: Arranca el Minwindes instalado (ej: <i>os minwindes98</i>, <i>os me</i>).<br>
-        - <b>apps [nombre]</b>: Ejecuta herramientas expandibles (winamp, blender).<br>
-        - <b>explorer.exe</b>: Abre el explorador gráfico de discos y archivos (C:, D:, Q:, Red K:).<br>
+        - <b>os [nombre]</b>: Arranca el Minwindes instalado (ej: <i>os minwindes98</i>).<br>
+        - <b>apps [nombre]</b>: Abre herramientas (winamp, blender).<br>
+        - <b>explorer.exe</b>: Abre el explorador de discos (C:, D:, Q:, Red K:).<br>
+        - <b>dir</b>: Lista archivos del directorio actual.<br>
+        - <b>ping [host]</b>: Prueba la conexión de red.<br>
+        - <b>snake</b>: Juega a la serpiente en ASCII.<br>
+        - <b>calc [operacion]</b>: Calculadora rápida.<br>
+        - <b>format</b>: ¡Peligro! Formatea el disco.<br>
         - <b>lang [es-es|es-mx|en]</b>: Cambia el idioma del sistema.<br>
         - <b>badges</b>: Muestra tus logros desbloqueados.<br>
         - <b>cls</b>: Limpia la pantalla.`,
@@ -29,10 +35,15 @@ function getDictText(key) {
       welcome: "HTML-DOS (c) 2026 stupid dev Systems. Versión chida para LATAM.",
       help: `<b>Comandos Chidos (HTML-DOS):</b><br>
         - <b>install [version]</b>: Instala Minwindes (minwindes1, minwindes98, me).<br>
-        - <b>os [nombre]</b>: Arranca el Minwindes instalado (ej: <i>os minwindes98</i>, <i>os me</i>).<br>
+        - <b>os [nombre]</b>: Arranca el Minwindes instalado.<br>
         - <b>apps [nombre]</b>: Abre herramientas (winamp, blender).<br>
-        - <b>explorer.exe</b>: Abre el explorador de discos (C:, D:, Q:, Red K:).<br>
-        - <b>lang [es-es|es-mx|en]</b>: Cambia el idioma al instante.<br>
+        - <b>explorer.exe</b>: Abre el explorador de discos.<br>
+        - <b>dir</b>: Lista archivos.<br>
+        - <b>ping [host]</b>: Prueba la red.<br>
+        - <b>snake</b>: Juega a la serpiente.<br>
+        - <b>calc [operacion]</b>: Calculadora.<br>
+        - <b>format</b>: Formatea el disco (¡cuidado!).<br>
+        - <b>lang [es-es|es-mx|en]</b>: Cambia el idioma.<br>
         - <b>badges</b>: Muestra tus logros.<br>
         - <b>cls</b>: Limpia la pantalla.`,
       installed: "¡Arre! Sistema instalado con éxito en C:\\Minwindes.",
@@ -42,9 +53,14 @@ function getDictText(key) {
       welcome: "HTML-DOS (c) 2026 stupid dev Systems. All rights reserved.",
       help: `<b>Available Commands (HTML-DOS):</b><br>
         - <b>install [version]</b>: Install Minwindes (minwindes1, minwindes98, me).<br>
-        - <b>os [name]</b>: Boot installed Minwindes (e.g., <i>os minwindes98</i>, <i>os me</i>).<br>
+        - <b>os [name]</b>: Boot installed Minwindes.<br>
         - <b>apps [name]</b>: Run tools (winamp, blender).<br>
-        - <b>explorer.exe</b>: Open disk and file explorer (C:, D:, Q:, Network K:).<br>
+        - <b>explorer.exe</b>: Open disk explorer.<br>
+        - <b>dir</b>: List directory files.<br>
+        - <b>ping [host]</b>: Test network connection.<br>
+        - <b>snake</b>: Play ASCII snake.<br>
+        - <b>calc [expression]</b>: Quick calculator.<br>
+        - <b>format</b>: Danger! Format drive.<br>
         - <b>lang [es-es|es-mx|en]</b>: Change system language.<br>
         - <b>badges</b>: View unlocked achievements.<br>
         - <b>cls</b>: Clear screen.`,
@@ -65,6 +81,14 @@ inputField.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     const rawCommand = inputField.value.trim();
     if(rawCommand !== '') {
+      // Si el juego de la serpiente está activo y escribe 'exit', lo cerramos
+      if (snakeActive && rawCommand.toLowerCase() === 'exit') {
+        stopSnake();
+        printToTerminal(`C:\\> exit`, 'user-cmd');
+        inputField.value = '';
+        return;
+      }
+      
       printToTerminal(`C:\\> ${rawCommand}`, 'user-cmd');
       processCommand(rawCommand);
       inputField.value = '';
@@ -78,13 +102,15 @@ function printToTerminal(text, className = '') {
   p.className = className;
   p.innerHTML = text;
   outputContainer.appendChild(p);
+  // Auto-scroll siempre al fondo
+  outputContainer.scrollTop = outputContainer.scrollHeight;
 }
 
 // Procesador central de comandos
 function processCommand(cmd) {
   const parts = cmd.toLowerCase().trim().split(/\s+/);
   const mainCmd = parts[0];
-  const subArg = parts[1];
+  const subArg = parts.slice(1).join(' '); // Unimos el resto por si es una operación con espacios
 
   switch(mainCmd) {
     case 'help':
@@ -152,10 +178,77 @@ function processCommand(cmd) {
       break;
 
     case 'explorer.exe':
-      printToTerminal(`[i] Abriendo Explorador de Discos (C:, D:, Q:, Red K:)...`);
+      printToTerminal(`[i] Abriendo Explorador de Discos...`);
       setTimeout(() => {
         openDiskExplorer();
       }, 500);
+      break;
+
+    // NUEVOS COMANDOS
+    case 'dir':
+      printToTerminal(`
+        <b> El volumen de la unidad C no tiene etiqueta.</b><br>
+        El número de serie del volumen es 1337-CAFE<br><br>
+        Directorio de C:\\<br><br>
+        11/11/2026  10:00 AM    &lt;DIR&gt;          SYSTEM<br>
+        11/11/2026  10:00 AM    &lt;DIR&gt;          GAMES<br>
+        11/11/2026  10:00 AM    &lt;DIR&gt;          DOCS<br>
+        11/11/2026  10:00 AM             1,337 AUTOEXEC.BAT<br>
+        11/11/2026  10:00 AM             4,206 CONFIG.SYS<br>
+                       2 archivos          5,543 bytes<br>
+                       3 dirs   1,048,576 bytes libres
+      `);
+      break;
+
+    case 'ping':
+      if (!subArg) {
+        printToTerminal(`Uso: ping [host] (ej. ping on-html.duckdns.org)`);
+      } else {
+        printToTerminal(`Haciendo ping a ${subArg} con 32 bytes de datos:`);
+        let count = 0;
+        const pingInt = setInterval(() => {
+          printToTerminal(`Respuesta desde ${subArg}: bytes=32 tiempo=${Math.floor(Math.random()*50+10)}ms TTL=64`);
+          count++;
+          if (count >= 4) {
+            clearInterval(pingInt);
+            printToTerminal(`Estadísticas de ping para ${subArg}:<br>    Paquetes: enviados = 4, recibidos = 4, perdidos = 0 (0% perdidos)`);
+          }
+        }, 600);
+      }
+      break;
+
+    case 'calc':
+      if (!subArg) {
+        printToTerminal(`Uso: calc [operacion] (ej. calc 5+5)`);
+      } else {
+        try {
+          // Solo permitir números y operadores básicos por seguridad
+          if (/^[0-9+\-*/(). ]+$/.test(subArg)) {
+            const result = eval(subArg);
+            printToTerminal(`Resultado de ${subArg} = <b>${result}</b>`);
+          } else {
+            printToTerminal(`<span style="color:#ff5555;">Error: Operación no válida.</span>`);
+          }
+        } catch (e) {
+          printToTerminal(`<span style="color:#ff5555;">Error de sintaxis.</span>`);
+        }
+      }
+      break;
+
+    case 'snake':
+      playSnake();
+      break;
+
+    case 'format':
+      printToTerminal(`<span style="color:#ffcc00;">ADVERTENCIA: ¿Estás seguro de que quieres formatear C:\\? (S/N)</span>`);
+      setTimeout(() => {
+        printToTerminal(`<span style="color:#ff0000; font-weight:bold;">Formateando C:\\... 10%</span>`);
+        setTimeout(() => printToTerminal(`<span style="color:#ff0000; font-weight:bold;">Formateando C:\\... 50%</span>`), 500);
+        setTimeout(() => {
+           printToTerminal(`<span style="color:#ff0000; font-weight:bold;">Formateando C:\\... 100%</span>`);
+           printToTerminal(`<span style="color:#00ff00;">[OK] Disco formateado. (Es broma, tus archivos están a salvo XD)</span>`);
+        }, 1000);
+      }, 1000);
       break;
 
     case 'stareggs':
@@ -189,8 +282,108 @@ function processCommand(cmd) {
 }
 
 // ==========================================
-// MÓDULO EXPLORADOR DE DISCOS Y ARCHIVOS (explorer.exe)
+// JUEGO DE LA SERPIENTE (SNAKE)
 // ==========================================
+let snakeInterval;
+let snakeActive = false;
+
+function playSnake() {
+  if (snakeActive) return;
+  snakeActive = true;
+  
+  printToTerminal(`
+    <b>=== 🐍 SNAKE.EXE (HTML-DOS EDITION) ===</b><br>
+    Usa las flechas del teclado (↑ ↓ ← →) para moverte.<br>
+    Escribe <b>exit</b> y presiona Enter para salir.<br>
+  `);
+
+  const gameArea = document.createElement('div');
+  gameArea.id = 'snake-game-area';
+  gameArea.style.cssText = "background:#000; color:#0f0; font-family:monospace; font-size:20px; line-height:20px; padding:10px; border:1px solid #0f0; display:inline-block; margin-top:10px; white-space:pre;";
+  outputContainer.appendChild(gameArea);
+  outputContainer.scrollTop = outputContainer.scrollHeight;
+
+  const width = 20;
+  const height = 10;
+  let snake = [{x: 5, y: 5}];
+  let food = {x: 10, y: 5};
+  let dir = {x: 1, y: 0};
+  let score = 0;
+
+  function draw() {
+    let html = "";
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+          html += "#";
+        } else if (snake.some(s => s.x === x && s.y === y)) {
+          html += "O";
+        } else if (food.x === x && food.y === y) {
+          html += "*";
+        } else {
+          html += " ";
+        }
+      }
+      html += "\n";
+    }
+    gameArea.innerHTML = html + `<br>Puntos: ${score}`;
+  }
+
+  function update() {
+    const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+    
+    // Colisiones
+    if (head.x <= 0 || head.x >= width - 1 || head.y <= 0 || head.y >= height - 1 || snake.some(s => s.x === head.x && s.y === head.y)) {
+      clearInterval(snakeInterval);
+      snakeActive = false;
+      gameArea.innerHTML += `<br><span style="color:red">GAME OVER - Puntos: ${score}</span>`;
+      document.removeEventListener('keydown', handleSnakeInput);
+      return;
+    }
+    
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      score += 10;
+      food = {x: Math.floor(Math.random() * (width - 2)) + 1, y: Math.floor(Math.random() * (height - 2)) + 1};
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  function handleSnakeInput(e) {
+    if (!snakeActive) return;
+    if (e.key === 'ArrowUp' && dir.y === 0) dir = {x: 0, y: -1};
+    if (e.key === 'ArrowDown' && dir.y === 0) dir = {x: 0, y: 1};
+    if (e.key === 'ArrowLeft' && dir.x === 0) dir = {x: -1, y: 0};
+    if (e.key === 'ArrowRight' && dir.x === 0) dir = {x: 1, y: 0};
+  }
+
+  // Guardamos la referencia para poder eliminarla luego
+  window.currentSnakeInputHandler = handleSnakeInput;
+  document.addEventListener('keydown', handleSnakeInput);
+  
+  draw();
+  snakeInterval = setInterval(update, 200);
+}
+
+function stopSnake() {
+  if (!snakeActive) return;
+  clearInterval(snakeInterval);
+  snakeActive = false;
+  document.removeEventListener('keydown', window.currentSnakeInputHandler);
+  
+  const gameArea = document.getElementById('snake-game-area');
+  if (gameArea) {
+    gameArea.innerHTML += `<br><span style="color:#ffcc00">Juego cancelado por el usuario.</span>`;
+  }
+  printToTerminal(`[i] Saliendo de Snake.exe...`);
+}
+
+// ==========================================
+// MÓDULO EXPLORADOR DE DISCOS (explorer.exe)
+// ==========================================
+// (Tu código original del explorador se mantiene igual)
 let currentDirectoryHandle = null;
 
 function openDiskExplorer() {
